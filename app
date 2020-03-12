@@ -29,4 +29,5 @@ try {
 
     $app->run(new ArgvInput(), new ConsoleOutput());
 } catch (Throwable $e) {
+    echo sprintf("\e[0;31mError: %s\e[0m\n", $e->getMessage());
 }
