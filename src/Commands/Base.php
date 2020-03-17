@@ -155,6 +155,8 @@ class Base extends Command
                 return $number1 - $number2;
             case '*':
                 return $number1 * $number2;
+            case '/':
+                return $number1 / $number2;
             default:
                 return $number1 + $number2;
                 break;
