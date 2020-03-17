@@ -3,6 +3,7 @@
 namespace Jakmall\Recruitment\Calculator\Commands;
 
 use Illuminate\Console\Command;
+use Jakmall\Recruitment\Calculator\Models\History;
 
 class Base extends Command
 {
@@ -108,7 +109,10 @@ class Base extends Command
 
         $description = $this->generateCalculationDescription($numbers);
         $result = $this->calculateAll($numbers);
-        $output = sprintf('%s = %s', $description, $result);
+        $output = sprintf('%s = %s', $description, $result);        
+
+        $history = new History(ucfirst($this->getCommandVerb()), $description, $result, $output);           
+        $this->saveData($history);
         
         $this->comment($output);
     }
@@ -158,10 +162,36 @@ class Base extends Command
             case '/':
                 return $number1 / $number2;
             case '^':
-                return pow($number1, $number2);
+                if($number1 == 0 && $number2 == 0){
+                    return 'infinity';
+                }elseif($number1 == 0 || $number2 == 0){
+                    return '0';
+                }else{
+                    return pow($number1, $number2);
+                }                
             default:
                 return $number1 + $number2;
                 break;
         }        
     }   
+
+    /**     
+     * @param History $data
+     **/
+    protected function saveData($data)
+    {
+        require_once "./config/database.php";
+        require_once "./config/file.php";
+        
+        $entityManager->persist($data);
+        $entityManager->flush();
+        
+        if (!file_exists($filePath)) {
+            file_put_contents($filePath, "[]");
+        }
+        
+        $savedData = json_decode(file_get_contents($filePath));
+        $savedData[] = json_decode($data->getJSON());
+        file_put_contents($filePath, json_encode($savedData));        
+    }
 }
