@@ -150,7 +150,9 @@ class Base extends Command
      */
     protected function calculate($number1, $number2)
     {
-        switch ($this->getOperator()) {                        
+        switch ($this->getOperator()) {    
+            case '-':
+                return $number1 - $number2;
             default:
                 return $number1 + $number2;
                 break;
