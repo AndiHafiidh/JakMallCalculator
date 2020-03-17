@@ -153,6 +153,8 @@ class Base extends Command
         switch ($this->getOperator()) {    
             case '-':
                 return $number1 - $number2;
+            case '*':
+                return $number1 * $number2;
             default:
                 return $number1 + $number2;
                 break;
