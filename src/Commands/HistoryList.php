@@ -2,8 +2,13 @@
 namespace Jakmall\Recruitment\Calculator\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Container\Container;
 use LucidFrame\Console\ConsoleTable;
 use Carbon\Carbon;
+use Jakmall\Recruitment\Calculator\History\Infrastructure\CommandHistoryManagerInterface;
+use Jakmall\Recruitment\Calculator\History\Infrastructure\Database;
+use Jakmall\Recruitment\Calculator\History\Infrastructure\File;
+
 
 class HistoryList extends Command
 {    
@@ -20,6 +25,11 @@ class HistoryList extends Command
      */
     protected $description;
 
+    /**
+     * @var CommandHistoryManagerInterface
+     */
+    private $connection;
+
     public function __construct()
     {        
 
@@ -29,7 +39,7 @@ class HistoryList extends Command
             'history:list'
         );
 
-        $this->description = 'Show calculator history';
+        $this->description = 'Show calculator history';        
         parent::__construct($signature, $description);
     }    
 
@@ -49,40 +59,17 @@ class HistoryList extends Command
         $driver = $this->getDriver();
 
         if (!in_array($driver, self::DRIVER_LIST)) throw new \Exception(self::ERR_DRIVER, 1);
-
-        require_once "./config/database.php";
-        require_once "./config/file.php";
-
+        
         $data = array();
         switch ($driver) {
-            case 'file':                
-                if (!file_exists($filePath)) {
-                    file_put_contents($filePath, "[]");
-                }else{
-                    $data = json_decode(file_get_contents($filePath));
-                    if($commands){
-                        $data = array_filter($data, function($dt) use ($commands){
-                            return in_array($dt->command, $commands);
-                        });
-                    }
-                }          
+            case 'file':                                
+                $this->connection = new Database();
             default:
-                $historyRepository = $entityManager->getRepository('Jakmall\Recruitment\Calculator\Models\History');
-                if($commands){
-                    $histories = $historyRepository->createQueryBuilder('h')
-                                    ->where('LOWER(h.command) IN (:commands)')
-                                    ->setParameter('commands', $commands, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY)
-                                    ->getQuery()
-                                    ->getResult();
-                }else{
-                    $histories = $historyRepository->findAll();
-                }
-                
-                foreach ($histories as $history) {
-                    $data[] = json_decode($history->getJSON());
-                }
+                $this->connection = new File();
                 break;
         }
+
+        $data = $this->connection->find($commands);
 
         if(count($data) > 0){
             $this->getTable($data);       

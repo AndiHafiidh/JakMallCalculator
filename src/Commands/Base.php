@@ -1,9 +1,11 @@
 <?php
-
 namespace Jakmall\Recruitment\Calculator\Commands;
 
 use Illuminate\Console\Command;
 use Jakmall\Recruitment\Calculator\Models\History;
+use Jakmall\Recruitment\Calculator\History\Infrastructure\Database;
+use Jakmall\Recruitment\Calculator\History\Infrastructure\File;
+
 
 class Base extends Command
 {
@@ -24,6 +26,11 @@ class Base extends Command
      * @var string
      */
     private $operator, $commandVerb, $commandPassiveVerb;   
+
+    /** 
+     * @var string
+     */
+    private $db, $file;
 
     /**
      * @param string $inOperator
@@ -58,6 +65,9 @@ class Base extends Command
         }else{
             $this->description = sprintf('%s all given Numbers', ucfirst($this->getCommandVerb()));        
         }
+
+        $this->db = new Database();
+        $this->file = new File();
 
         parent::__construct();
     }
@@ -112,7 +122,11 @@ class Base extends Command
         $output = sprintf('%s = %s', $description, $result);        
 
         $history = new History(ucfirst($this->getCommandVerb()), $description, $result, $output);           
-        $this->saveData($history);
+        $id = $this->db->log($history);
+
+        if($id){            
+            $this->file->log($history);
+        }
         
         $this->comment($output);
     }
@@ -174,24 +188,4 @@ class Base extends Command
                 break;
         }        
     }   
-
-    /**     
-     * @param History $data
-     **/
-    protected function saveData($data)
-    {
-        require_once "./config/database.php";
-        require_once "./config/file.php";
-        
-        $entityManager->persist($data);
-        $entityManager->flush();
-        
-        if (!file_exists($filePath)) {
-            file_put_contents($filePath, "[]");
-        }
-        
-        $savedData = json_decode(file_get_contents($filePath));
-        $savedData[] = json_decode($data->getJSON());
-        file_put_contents($filePath, json_encode($savedData));        
-    }
 }

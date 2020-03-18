@@ -12,8 +12,15 @@ try {
 
     $container = new Container();
     $dispatcher = new Dispatcher();
-    $app = new Application($container, $dispatcher, '0.6');
+    $app = new Application($container, $dispatcher, '0.7');
     $app->setName('Calculator');
+    $providers = [
+        \Jakmall\Recruitment\Calculator\History\CommandHistoryServiceProvider::class,
+    ];
+
+    foreach ($providers as $provider) {
+        $container->make($provider)->register($container);
+    }
 
     $commands = require_once __DIR__.'/commands.php';
     $commands = collect($commands)
