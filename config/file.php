@@ -1,3 +1,3 @@
 <?php 
-    $filePath = "./data/history.json";
+    $filePath = "./data";
 ?>
