@@ -19,10 +19,12 @@ class File implements CommandHistoryManagerInterface
 
     public function find($params = null): array
     {
-        $data = json_decode(file_get_contents($this->path));    
-        if($params){
+        $data = json_decode(file_get_contents($this->path));                      
+        $params = array_map('strtolower', $params);
+
+        if($params){            
             $data = array_filter($data, function($dt) use ($params){
-                return in_array($dt->command, $params);
+                return in_array(strtolower($dt->command), $params, FALSE);
             });
         }
         
